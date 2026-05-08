@@ -90,11 +90,65 @@
     <% end %>
 
     <%# Period Display %>
-    <div class="text-sm text-subdued">
-      <%= t("reports.index.showing_period",
-            start: @start_date.strftime("%b %-d, %Y"),
-            end: @end_date.strftime("%b %-d, %Y")) %>
-    </div>
+      <% unless @period_type == :custom %>
+        <div class="flex items-center gap-3 text-sm text-subdued">
+          <%# Calculate prev/next ranges based on period type %>
+          <% case @period_type
+            when :monthly
+              prev_start = @start_date.beginning_of_month - 1.month
+              prev_end   = prev_start.end_of_month
+              next_start = @start_date.beginning_of_month + 1.month
+              next_end   = next_start.end_of_month
+              at_latest  = @start_date.beginning_of_month >= Date.current.beginning_of_month
+            when :quarterly
+              prev_start = (@start_date.beginning_of_quarter - 1.day).beginning_of_quarter
+              prev_end   = prev_start.end_of_quarter
+              next_start = @end_date.end_of_quarter + 1.day
+              next_end   = next_start.end_of_quarter
+              at_latest  = @start_date.beginning_of_quarter >= Date.current.beginning_of_quarter
+            when :ytd
+              prev_year  = @start_date.year - 1
+              prev_start = Date.new(prev_year, 1, 1)
+              prev_end   = Date.new(prev_year, 12, 31)
+              next_year  = @start_date.year + 1
+              next_start = Date.new(next_year, 1, 1)
+              next_end   = next_year == Date.current.year ? Date.current : Date.new(next_year, 12, 31)
+              at_latest  = @start_date.year >= Date.current.year
+            when :last_6_months
+              prev_start = @start_date.beginning_of_month - 6.months
+              prev_end   = prev_start + 6.months - 1.day
+              next_start = @start_date.beginning_of_month + 6.months
+              next_end   = if next_start + 6.months >= Date.current.beginning_of_month
+                              Date.current.end_of_month
+                            else
+                              next_start + 6.months - 1.day
+                            end
+              at_latest  = @end_date >= Date.current.end_of_month
+            end %>
+
+          <% if [:monthly, :quarterly, :ytd, :last_6_months].include?(@period_type) %>
+            <%= link_to reports_path(period_type: @period_type, start_date: prev_start, end_date: prev_end),
+                  aria: { label: "Previous period" },
+                  class: "text-secondary hover:text-primary transition-colors" do %>
+              <%= icon("chevron-left", size: "sm") %>
+            <% end %>
+          <% end %>
+
+          <span>
+            <%= t("reports.index.showing_period",
+                  start: @start_date.strftime("%b %-d, %Y"),
+                  end: @end_date.strftime("%b %-d, %Y")) %>
+          </span>
+
+          <% if [:monthly, :quarterly, :ytd, :last_6_months].include?(@period_type) %>
+            <%= link_to reports_path(period_type: @period_type, start_date: next_start, end_date: next_end),
+                  aria: { label: "Next period" },
+                  class: "#{ at_latest ? 'text-disabled pointer-events-none' : 'text-secondary hover:text-primary transition-colors' }" do %>
+              <%= icon("chevron-right", size: "sm") %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
   </div>
 <% end %>
 
