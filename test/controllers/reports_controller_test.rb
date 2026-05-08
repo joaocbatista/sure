@@ -108,8 +108,8 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :ok
     assert_equal I18n.t("reports.invalid_date_range"), flash[:alert]
-    assert_includes @response.body, end_date.strftime("%b")
-    assert_includes @response.body, start_date.strftime("%b")
+    assert_includes @response.body, end_date.strftime("%b %Y")
+    assert_includes @response.body, start_date.strftime("%b %Y")
   end
 
   test "spending patterns returns data when expense transactions exist" do
@@ -255,7 +255,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     get reports_path(period_type: :monthly)
     assert_response :ok
 
-    assert_select "span[aria-disabled=true]"
+    assert_select "span[aria-label=?][aria-disabled=true]", I18n.t("reports.index.next_period")
   end
 
   test "monthly period navigation shows next month link on past month" do
@@ -276,21 +276,35 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     get reports_path(period_type: :last_6_months, start_date: start_date, end_date: end_date)
     assert_response :ok
 
-    # Debug: print all hrefs containing last_6_months
-    hrefs = @response.body.scan(/href="([^"]*last_6_months[^"]*)"/).flatten
-    puts "Found hrefs: #{hrefs}"
+    candidate_start = start_date.beginning_of_month + 6.months
+    if candidate_start + 6.months >= Date.current.beginning_of_month
+      expected_next_end   = Date.current.end_of_month
+      expected_next_start = (expected_next_end + 1.day - 6.months).beginning_of_month
+    else
+      expected_next_start = candidate_start
+      expected_next_end   = expected_next_start + 6.months - 1.day
+    end
 
-    assert true # placeholder
+    assert_select "a[href=?]",
+      reports_path(period_type: :last_6_months, start_date: expected_next_start, end_date: expected_next_end)
   end
 
   test "quarterly period navigation shows previous and next quarter links" do
-    get reports_path(period_type: :quarterly)
-    assert_response :ok
+      get reports_path(period_type: :quarterly)
+      assert_response :ok
 
-    prev_start = (Date.current.beginning_of_quarter - 1.day).beginning_of_quarter
-    prev_end = prev_start.end_of_quarter
-    assert_select "a[href=?]", reports_path(period_type: :quarterly, start_date: prev_start, end_date: prev_end)
-  end
+      prev_start = (Date.current.beginning_of_quarter - 1.day).beginning_of_quarter
+      prev_end = prev_start.end_of_quarter
+      assert_select "a[href=?]", reports_path(period_type: :quarterly, start_date: prev_start, end_date: prev_end)
+
+      # Also verify a past quarter shows an enabled next-quarter link
+      get reports_path(period_type: :quarterly, start_date: prev_start, end_date: prev_end)
+      assert_response :ok
+
+      next_start = prev_start.next_quarter.beginning_of_quarter
+      next_end   = next_start.end_of_quarter
+      assert_select "a[href=?]", reports_path(period_type: :quarterly, start_date: next_start, end_date: next_end)
+    end
 
   test "custom period hides period display" do
     get reports_path(

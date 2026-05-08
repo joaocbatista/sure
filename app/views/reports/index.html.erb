@@ -105,7 +105,7 @@
           </span>
 
           <% if @nav[:at_latest] %>
-            <span class="text-disabled" aria-disabled="true">
+            <span class="text-disabled" aria-disabled="true" aria-label="<%= t('reports.index.next_period') %>">
               <%= icon("chevron-right", size: "sm") %>
             </span>
           <% else %>
