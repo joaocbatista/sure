@@ -117,18 +117,20 @@
             when :last_6_months
               prev_start = @start_date.beginning_of_month - 6.months
               prev_end   = prev_start + 6.months - 1.day
-              next_start = @start_date.beginning_of_month + 6.months
-              next_end   = if next_start + 6.months >= Date.current.beginning_of_month
-                              Date.current.end_of_month
-                            else
-                              next_start + 6.months - 1.day
-                            end
+              raw_next_end = @start_date.beginning_of_month + 12.months - 1.day
+              if raw_next_end >= Date.current.end_of_month
+                next_end   = Date.current.end_of_month
+                next_start = next_end - 6.months + 1.day
+              else
+                next_start = @start_date.beginning_of_month + 6.months
+                next_end   = raw_next_end
+              end
               at_latest  = @end_date >= Date.current.end_of_month
             end %>
 
           <% if [:monthly, :quarterly, :ytd, :last_6_months].include?(@period_type) %>
             <%= link_to reports_path(period_type: @period_type, start_date: prev_start, end_date: prev_end),
-                  aria: { label: "Previous period" },
+                  aria: { label: t("reports.index.previous_period") },
                   class: "text-secondary hover:text-primary transition-colors" do %>
               <%= icon("chevron-left", size: "sm") %>
             <% end %>
@@ -147,7 +149,7 @@
               </span>
             <% else %>
               <%= link_to reports_path(period_type: @period_type, start_date: next_start, end_date: next_end),
-                    aria: { label: "Next period" },
+                    aria: { label: t("reports.index.next_period") },
                     class: "text-secondary hover:text-primary transition-colors" do %>
                 <%= icon("chevron-right", size: "sm") %>
               <% end %>
