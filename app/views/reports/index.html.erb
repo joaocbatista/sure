@@ -141,10 +141,16 @@
           </span>
 
           <% if [:monthly, :quarterly, :ytd, :last_6_months].include?(@period_type) %>
-            <%= link_to reports_path(period_type: @period_type, start_date: next_start, end_date: next_end),
-                  aria: { label: "Next period" },
-                  class: "#{ at_latest ? 'text-disabled pointer-events-none' : 'text-secondary hover:text-primary transition-colors' }" do %>
-              <%= icon("chevron-right", size: "sm") %>
+            <% if at_latest %>
+              <span class="text-disabled" aria-disabled="true">
+                <%= icon("chevron-right", size: "sm") %>
+              </span>
+            <% else %>
+              <%= link_to reports_path(period_type: @period_type, start_date: next_start, end_date: next_end),
+                    aria: { label: "Next period" },
+                    class: "text-secondary hover:text-primary transition-colors" do %>
+                <%= icon("chevron-right", size: "sm") %>
+              <% end %>
             <% end %>
           <% end %>
         </div>
