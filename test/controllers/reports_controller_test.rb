@@ -315,5 +315,6 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
 
     assert_select "a[aria-label=?]", I18n.t("reports.index.previous_period"), count: 0
+    assert_select "[aria-label=?]", I18n.t("reports.index.next_period"), count: 0
   end
 end
