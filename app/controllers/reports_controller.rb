@@ -88,6 +88,15 @@ class ReportsController < ApplicationController
     # It will render *inside* the modal frame.
   end
 
+  def picker
+    @period_type = params[:period_type]&.to_sym || :monthly
+    @start_date = parse_date_param(:start_date) || Date.current.beginning_of_month
+    render partial: "reports/period_picker", locals: {
+      period_type: @period_type,
+      start_date: @start_date
+    }
+  end
+
   private
     def setup_report_data(show_flash: false)
       @period_type = params[:period_type]&.to_sym || :monthly
@@ -1112,6 +1121,19 @@ class ReportsController < ApplicationController
         return nil
       end
 
-      { prev_start: prev_start, prev_end: prev_end, next_start: next_start, next_end: next_end, at_latest: at_latest }
+      { prev_start: prev_start, prev_end: prev_end, next_start: next_start, next_end: next_end, at_latest: at_latest, label: period_label }
+    end
+
+    def period_label
+      case @period_type
+      when :monthly
+        @start_date.strftime("%B %Y")
+      when :quarterly
+        "Q#{(@start_date.month / 3.0).ceil} #{@start_date.year}"
+      when :ytd
+        @start_date.year == Date.current.year ? "YTD #{@start_date.year}" : @start_date.year.to_s
+      when :last_6_months
+        "#{@start_date.strftime("%b %Y")} – #{@end_date.strftime("%b %Y")}"
+      end
     end
 end
