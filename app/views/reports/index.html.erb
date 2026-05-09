@@ -92,10 +92,26 @@
     <%# Period Display %>
       <% unless @period_type == :custom %>
         <div class="flex items-center gap-3 text-sm text-subdued">
-          <%= link_to reports_path(period_type: @period_type, start_date: @nav[:prev_start], end_date: @nav[:prev_end]),
-                aria: { label: t("reports.index.previous_period") },
-                class: "text-secondary hover:text-primary transition-colors" do %>
-            <%= icon("chevron-left", size: "sm") %>
+          <% if @nav %>
+            <div class="flex items-center gap-2">
+              <%= render DS::Link.new(
+                variant: "icon",
+                icon: "chevron-left",
+                href: reports_path(period_type: @period_type, start_date: @nav[:prev_start], end_date: @nav[:prev_end]),
+              ) %>
+
+              <% if @nav[:at_latest] %>
+                <span class="text-subdued" aria-label="<%= t('reports.index.next_period') %>" aria-disabled="true">
+                  <%= icon("chevron-right", color: "current") %>
+                </span>
+              <% else %>
+                <%= render DS::Link.new(
+                  variant: "icon",
+                  icon: "chevron-right",
+                  href: reports_path(period_type: @period_type, start_date: @nav[:next_start], end_date: @nav[:next_end]),
+                ) %>
+              <% end %>
+            </div>
           <% end %>
 
           <span>
@@ -103,18 +119,6 @@
                   start: @start_date.strftime("%b %-d, %Y"),
                   end: @end_date.strftime("%b %-d, %Y")) %>
           </span>
-
-          <% if @nav[:at_latest] %>
-            <span class="text-disabled" aria-disabled="true" aria-label="<%= t('reports.index.next_period') %>">
-              <%= icon("chevron-right", size: "sm") %>
-            </span>
-          <% else %>
-            <%= link_to reports_path(period_type: @period_type, start_date: @nav[:next_start], end_date: @nav[:next_end]),
-                  aria: { label: t("reports.index.next_period") },
-                  class: "text-secondary hover:text-primary transition-colors" do %>
-              <%= icon("chevron-right", size: "sm") %>
-            <% end %>
-          <% end %>
         </div>
       <% end %>
   </div>
