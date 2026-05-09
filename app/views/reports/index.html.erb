@@ -100,9 +100,9 @@
           ) %>
 
           <% if @nav[:at_latest] %>
-            <span class="text-subdued" aria-label="<%= t('reports.index.next_period') %>" aria-disabled="true">
+            <button disabled aria-label="<%= t('reports.index.next_period') %>" class="text-subdued inline-flex items-center justify-center w-9 h-9 rounded-lg cursor-not-allowed">
               <%= icon("chevron-right", color: "current") %>
-            </span>
+            </button>
           <% else %>
             <%= render DS::Link.new(
               variant: "icon",
