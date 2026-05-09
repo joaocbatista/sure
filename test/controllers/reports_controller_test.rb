@@ -290,21 +290,21 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "quarterly period navigation shows previous and next quarter links" do
-      get reports_path(period_type: :quarterly)
-      assert_response :ok
+    get reports_path(period_type: :quarterly)
+    assert_response :ok
 
-      prev_start = (Date.current.beginning_of_quarter - 1.day).beginning_of_quarter
-      prev_end = prev_start.end_of_quarter
-      assert_select "a[href=?]", reports_path(period_type: :quarterly, start_date: prev_start, end_date: prev_end)
+    prev_start = (Date.current.beginning_of_quarter - 1.day).beginning_of_quarter
+    prev_end = prev_start.end_of_quarter
+    assert_select "a[href=?]", reports_path(period_type: :quarterly, start_date: prev_start, end_date: prev_end)
 
-      # Also verify a past quarter shows an enabled next-quarter link
-      get reports_path(period_type: :quarterly, start_date: prev_start, end_date: prev_end)
-      assert_response :ok
+    # Also verify a past quarter shows an enabled next-quarter link
+    get reports_path(period_type: :quarterly, start_date: prev_start, end_date: prev_end)
+    assert_response :ok
 
-      next_start = prev_start.next_quarter.beginning_of_quarter
-      next_end   = next_start.end_of_quarter
-      assert_select "a[href=?]", reports_path(period_type: :quarterly, start_date: next_start, end_date: next_end)
-    end
+    next_start = prev_start.next_quarter.beginning_of_quarter
+    next_end   = next_start.end_of_quarter
+    assert_select "a[href=?]", reports_path(period_type: :quarterly, start_date: next_start, end_date: next_end)
+  end
 
   test "custom period hides period display" do
     get reports_path(
@@ -316,5 +316,21 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "a[aria-label=?]", I18n.t("reports.index.previous_period"), count: 0
     assert_select "[aria-label=?]", I18n.t("reports.index.next_period"), count: 0
+  end
+  test "ytd period navigation shows previous year link" do
+    get reports_path(period_type: :ytd)
+    assert_response :ok
+
+    prev_year  = Date.current.year - 1
+    prev_start = Date.new(prev_year, 1, 1)
+    prev_end   = Date.new(prev_year, 12, 31)
+    assert_select "a[href=?]", reports_path(period_type: :ytd, start_date: prev_start, end_date: prev_end)
+  end
+
+  test "ytd period navigation disables next arrow on current year" do
+    get reports_path(period_type: :ytd)
+    assert_response :ok
+
+    assert_select "span[aria-label=?][aria-disabled=true]", I18n.t("reports.index.next_period")
   end
 end
