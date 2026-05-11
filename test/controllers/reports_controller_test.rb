@@ -242,6 +242,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr[data-category='category-#{subcategory_movies.id}']", text: /^Movies/
     assert_select "tr[data-category='category-#{subcategory_games.id}']", text: /^Games/
   end
+
   test "monthly period navigation shows previous month link" do
     get reports_path(period_type: :monthly)
     assert_response :ok
@@ -255,7 +256,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     get reports_path(period_type: :monthly)
     assert_response :ok
 
-    assert_select "span[aria-label=?][aria-disabled=true]", I18n.t("reports.index.next_period")
+    assert_select "button[disabled][aria-label=?]", I18n.t("reports.index.next_period")
   end
 
   test "monthly period navigation shows next month link on past month" do
@@ -317,6 +318,7 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[aria-label=?]", I18n.t("reports.index.previous_period"), count: 0
     assert_select "[aria-label=?]", I18n.t("reports.index.next_period"), count: 0
   end
+
   test "ytd period navigation shows previous year link" do
     get reports_path(period_type: :ytd)
     assert_response :ok
@@ -331,6 +333,6 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     get reports_path(period_type: :ytd)
     assert_response :ok
 
-    assert_select "span[aria-label=?][aria-disabled=true]", I18n.t("reports.index.next_period")
+    assert_select "button[disabled][aria-label=?]", I18n.t("reports.index.next_period")
   end
 end
