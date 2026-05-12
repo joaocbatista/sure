@@ -7,6 +7,7 @@
       <div class="flex items-center gap-2 justify-between mb-2">
         <%= link_to picker_reports_path(period_type: :monthly, start_date: start_date.beginning_of_year - 1.year),
               data: { turbo_frame: "reports_picker" },
+              aria: { label: t("reports.index.previous_year") },
               class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
           <%= icon "chevron-left" %>
         <% end %>
@@ -19,6 +20,7 @@
         <% if next_year_start <= Date.current %>
           <%= link_to picker_reports_path(period_type: :monthly, start_date: next_year_start),
                 data: { turbo_frame: "reports_picker" },
+                aria: { label: t("reports.index.next_year") },
                 class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
             <%= icon "chevron-right" %>
           <% end %>
@@ -51,6 +53,7 @@
       <div class="flex items-center gap-2 justify-between mb-2">
         <%= link_to picker_reports_path(period_type: :quarterly, start_date: Date.new(start_date.year - 1, 1, 1)),
               data: { turbo_frame: "reports_picker" },
+              aria: { label: t("reports.index.previous_year") },
               class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
           <%= icon "chevron-left" %>
         <% end %>
@@ -63,6 +66,7 @@
         <% if next_year_start <= Date.current %>
           <%= link_to picker_reports_path(period_type: :quarterly, start_date: next_year_start),
                 data: { turbo_frame: "reports_picker" },
+                aria: { label: t("reports.index.next_year") },
                 class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
             <%= icon "chevron-right" %>
           <% end %>
@@ -98,6 +102,7 @@
       <div class="flex items-center gap-2 justify-between mb-2">
         <%= link_to picker_reports_path(period_type: :ytd, start_date: Date.new(decade_start - 1, 1, 1)),
               data: { turbo_frame: "reports_picker" },
+              aria: { label: t("reports.index.previous_decade") },
               class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
           <%= icon "chevron-left" %>
         <% end %>
@@ -109,6 +114,7 @@
         <% if decade_start + 10 <= Date.current.year %>
           <%= link_to picker_reports_path(period_type: :ytd, start_date: Date.new(decade_start + 10, 1, 1)),
                 data: { turbo_frame: "reports_picker" },
+                aria: { label: t("reports.index.next_decade") },
                 class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
             <%= icon "chevron-right" %>
           <% end %>
