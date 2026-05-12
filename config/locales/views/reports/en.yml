@@ -26,6 +26,9 @@ en:
         ytd: "YTD %{year}"
         past_year: "%{year}"
         last_6_months: "%{start} – %{end}"
+      period_picker:
+        quarter: "Q%{quarter} %{year}"
+        ytd: "YTD %{year}"
       previous_year: "Previous year"
       next_year: "Next year"
       previous_decade: "Previous decade"

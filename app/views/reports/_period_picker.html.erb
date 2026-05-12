@@ -84,13 +84,13 @@
           <% if quarter_start <= Date.current %>
             <%= render DS::Link.new(
               variant: quarter_start.quarter == start_date.quarter && start_date.year == quarter_start.year ? "secondary" : "ghost",
-              text: "Q#{q} #{start_date.year}",
+              text: t("reports.index.period_picker.quarter", quarter: q, year: start_date.year),
               href: reports_path(period_type: :quarterly, start_date: quarter_start, end_date: quarter_end),
               full_width: true,
               frame: :_top
             ) %>
           <% else %>
-            <span class="px-3 py-2 text-subdued rounded-md">Q<%= q %> <%= start_date.year %></span>
+            <span class="px-3 py-2 text-subdued rounded-md"><%= t("reports.index.period_picker.quarter", quarter: q, year: start_date.year) %></span>
           <% end %>
         <% end %>
       </div>
@@ -132,7 +132,7 @@
           <% year_end = year == Date.current.year ? Date.current : Date.new(year, 12, 31) %>
           <%= render DS::Link.new(
             variant: year == start_date.year ? "secondary" : "ghost",
-            text: year == Date.current.year ? "YTD #{year}" : year.to_s,
+            text: year == Date.current.year ? t("reports.index.period_picker.ytd", year: year) : year.to_s,
             href: reports_path(period_type: :ytd, start_date: year_start, end_date: year_end),
             full_width: true,
             frame: :_top
