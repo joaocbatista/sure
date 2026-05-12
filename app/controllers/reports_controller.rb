@@ -1127,13 +1127,20 @@ class ReportsController < ApplicationController
     def period_label
       case @period_type
       when :monthly
-        @start_date.strftime("%B %Y")
+        I18n.l(@start_date, format: :month_year)
       when :quarterly
-        "Q#{(@start_date.month / 3.0).ceil} #{@start_date.year}"
+        quarter = ((@start_date.month - 1) / 3) + 1
+        t("reports.index.period_label.quarterly", quarter: quarter, year: @start_date.year)
       when :ytd
-        @start_date.year == Date.current.year ? "YTD #{@start_date.year}" : @start_date.year.to_s
+        if @start_date.year == Date.current.year
+          t("reports.index.period_label.ytd", year: @start_date.year)
+        else
+          t("reports.index.period_label.past_year", year: @start_date.year)
+        end
       when :last_6_months
-        "#{@start_date.strftime("%b %Y")} – #{@end_date.strftime("%b %Y")}"
+        t("reports.index.period_label.last_6_months",
+          start: I18n.l(@start_date, format: :short_month_year),
+          end: I18n.l(@end_date, format: :short_month_year))
       end
     end
 end

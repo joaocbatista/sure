@@ -21,6 +21,11 @@ en:
       previous_period: "Previous period"
       next_period: "Next period"
       today: "Today"
+      period_label:
+      quarterly: "Q%{quarter} %{year}"
+      ytd: "YTD %{year}"
+      past_year: "%{year}"
+      last_6_months: "%{start} – %{end}"
     invalid_date_range: "End date cannot be before start date. The dates have been swapped."
     summary:
       total_income: Total Income
