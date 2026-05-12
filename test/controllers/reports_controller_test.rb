@@ -315,8 +315,10 @@ class ReportsControllerTest < ActionDispatch::IntegrationTest
     )
     assert_response :ok
 
-    assert_select "a[aria-label=?]", I18n.t("reports.index.previous_period"), count: 0
-    assert_select "[aria-label=?]", I18n.t("reports.index.next_period"), count: 0
+    prev_start = 1.month.ago.to_date.beginning_of_month - 1.month
+    next_start = 1.month.ago.to_date.beginning_of_month + 1.month
+    assert_select "a[href*=?]", "start_date=#{prev_start}", count: 0
+    assert_select "a[href*=?]", "start_date=#{next_start}", count: 0
   end
 
   test "ytd period navigation shows previous year link" do
