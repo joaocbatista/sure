@@ -1084,6 +1084,7 @@ class ReportsController < ApplicationController
     end
 
     def build_period_navigation
+      # Called at the end of setup_report_data, so @start_date and @end_date are guaranteed to be set.
       case @period_type
       when :monthly
         prev_start = @start_date.beginning_of_month - 1.month
