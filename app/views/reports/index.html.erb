@@ -97,6 +97,7 @@
             variant: "icon",
             icon: "chevron-left",
             href: reports_path(period_type: @period_type, start_date: @nav[:prev_start], end_date: @nav[:prev_end]),
+            aria: { label: t("reports.index.previous_period") },
           ) %>
 
           <% if @nav[:at_latest] %>
@@ -108,6 +109,7 @@
               variant: "icon",
               icon: "chevron-right",
               href: reports_path(period_type: @period_type, start_date: @nav[:next_start], end_date: @nav[:next_end]),
+              aria: { label: t("reports.index.next_period") },
             ) %>
           <% end %>
         </div>
