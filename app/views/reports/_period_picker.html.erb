@@ -5,27 +5,29 @@
     <% case period_type %>
     <% when :monthly %>
       <div class="flex items-center gap-2 justify-between mb-2">
-        <%= link_to picker_reports_path(period_type: :monthly, start_date: start_date.beginning_of_year - 1.year),
-              data: { turbo_frame: "reports_picker" },
-              aria: { label: t("reports.index.previous_year") },
-              class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
-          <%= icon "chevron-left" %>
-        <% end %>
+        <%= render DS::Link.new(
+          variant: "icon",
+          icon: "chevron-left",
+          href: picker_reports_path(period_type: :monthly, start_date: start_date.beginning_of_year - 1.year),
+          aria: { label: t("reports.index.previous_year") },
+          frame: "reports_picker"
+        ) %>
 
-        <span class="w-40 text-center px-3 py-2 border border-tertiary rounded-md">
+        <span class="w-40 text-center px-3 py-2">
           <%= start_date.year %>
         </span>
 
         <% next_year_start = Date.new(start_date.year + 1, 1, 1) %>
         <% if next_year_start <= Date.current %>
-          <%= link_to picker_reports_path(period_type: :monthly, start_date: next_year_start),
-                data: { turbo_frame: "reports_picker" },
-                aria: { label: t("reports.index.next_year") },
-                class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
-            <%= icon "chevron-right" %>
-          <% end %>
+          <%= render DS::Link.new(
+            variant: "icon",
+            icon: "chevron-right",
+            href: picker_reports_path(period_type: :monthly, start_date: next_year_start),
+            aria: { label: t("reports.index.next_year") },
+            frame: "reports_picker"
+          ) %>
         <% else %>
-          <span class="p-2 flex items-center justify-center text-subdued rounded-md">
+          <span class="text-subdued inline-flex items-center justify-center w-9 h-9 rounded-lg">
             <%= icon "chevron-right", color: "current" %>
           </span>
         <% end %>
@@ -51,27 +53,29 @@
 
     <% when :quarterly %>
       <div class="flex items-center gap-2 justify-between mb-2">
-        <%= link_to picker_reports_path(period_type: :quarterly, start_date: Date.new(start_date.year - 1, 1, 1)),
-              data: { turbo_frame: "reports_picker" },
-              aria: { label: t("reports.index.previous_year") },
-              class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
-          <%= icon "chevron-left" %>
-        <% end %>
+        <%= render DS::Link.new(
+          variant: "icon",
+          icon: "chevron-left",
+          href: picker_reports_path(period_type: :quarterly, start_date: Date.new(start_date.year - 1, 1, 1)),
+          aria: { label: t("reports.index.previous_year") },
+          frame: "reports_picker"
+        ) %>
 
-        <span class="w-40 text-center px-3 py-2 border border-tertiary rounded-md">
+        <span class="w-40 text-center px-3 py-2">
           <%= start_date.year %>
         </span>
 
         <% next_year_start = Date.new(start_date.year + 1, 1, 1) %>
         <% if next_year_start <= Date.current %>
-          <%= link_to picker_reports_path(period_type: :quarterly, start_date: next_year_start),
-                data: { turbo_frame: "reports_picker" },
-                aria: { label: t("reports.index.next_year") },
-                class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
-            <%= icon "chevron-right" %>
-          <% end %>
+          <%= render DS::Link.new(
+            variant: "icon",
+            icon: "chevron-right",
+            href: picker_reports_path(period_type: :quarterly, start_date: next_year_start),
+            aria: { label: t("reports.index.next_year") },
+            frame: "reports_picker"
+          ) %>
         <% else %>
-          <span class="p-2 flex items-center justify-center text-subdued rounded-md">
+          <span class="text-subdued inline-flex items-center justify-center w-9 h-9 rounded-lg">
             <%= icon "chevron-right", color: "current" %>
           </span>
         <% end %>
@@ -100,26 +104,28 @@
       <% decade_end = decade_start + 9 %>
 
       <div class="flex items-center gap-2 justify-between mb-2">
-        <%= link_to picker_reports_path(period_type: :ytd, start_date: Date.new(decade_start - 1, 1, 1)),
-              data: { turbo_frame: "reports_picker" },
-              aria: { label: t("reports.index.previous_decade") },
-              class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
-          <%= icon "chevron-left" %>
-        <% end %>
+        <%= render DS::Link.new(
+          variant: "icon",
+          icon: "chevron-left",
+          href: picker_reports_path(period_type: :ytd, start_date: Date.new(decade_start - 1, 1, 1)),
+          aria: { label: t("reports.index.previous_decade") },
+          frame: "reports_picker"
+        ) %>
 
-        <span class="w-40 text-center px-3 py-2 border border-tertiary rounded-md">
+        <span class="w-40 text-center px-3 py-2">
           <%= decade_start %>–<%= decade_end %>
         </span>
 
         <% if decade_start + 10 <= Date.current.year %>
-          <%= link_to picker_reports_path(period_type: :ytd, start_date: Date.new(decade_start + 10, 1, 1)),
-                data: { turbo_frame: "reports_picker" },
-                aria: { label: t("reports.index.next_decade") },
-                class: "p-2 flex items-center justify-center hover:bg-alpha-black-25 rounded-md" do %>
-            <%= icon "chevron-right" %>
-          <% end %>
+          <%= render DS::Link.new(
+            variant: "icon",
+            icon: "chevron-right",
+            href: picker_reports_path(period_type: :ytd, start_date: Date.new(decade_start + 10, 1, 1)),
+            aria: { label: t("reports.index.next_decade") },
+            frame: "reports_picker"
+          ) %>
         <% else %>
-          <span class="p-2 flex items-center justify-center text-subdued rounded-md">
+          <span class="text-subdued inline-flex items-center justify-center w-9 h-9 rounded-lg">
             <%= icon "chevron-right", color: "current" %>
           </span>
         <% end %>

@@ -1130,8 +1130,7 @@ class ReportsController < ApplicationController
       when :monthly
         I18n.l(@start_date, format: :month_year)
       when :quarterly
-        quarter = ((@start_date.month - 1) / 3) + 1
-        t("reports.index.period_label.quarterly", quarter: quarter, year: @start_date.year)
+        t("reports.index.period_label.quarterly", quarter: @start_date.quarter, year: @start_date.year)
       when :ytd
         if @start_date.year == Date.current.year
           t("reports.index.period_label.ytd", year: @start_date.year)
