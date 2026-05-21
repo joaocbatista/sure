@@ -145,7 +145,7 @@ class Api::V1::TradesController < Api::V1::BaseController
 
     def trade_params
       params.require(:trade).permit(
-        :account_id, :date, :qty, :price, :currency,
+        :account_id, :date, :qty, :price, :amount, :currency, :type,
         :security_id, :ticker, :manual_ticker, :investment_activity_label, :category_id
       )
     end
@@ -202,18 +202,50 @@ class Api::V1::TradesController < Api::V1::BaseController
 
     def build_create_form_params(account)
       type = params.dig(:trade, :type).to_s.downcase
-      unless %w[buy sell].include?(type)
-        render_validation_error("Type must be buy or sell", [ "type must be 'buy' or 'sell'" ])
+
+      allowed_types = %w[buy sell interest dividend deposit withdrawal]
+      unless allowed_types.include?(type)
+        render_validation_error(
+          "Type must be one of: #{allowed_types.join(', ')}",
+          [ "type must be one of: #{allowed_types.join(', ')}" ]
+        )
         return nil
       end
-
-      ticker_value = nil
-      manual_ticker_value = nil
 
       unless trade_params[:date].present?
         render_validation_error("Date is required", [ "date must be present" ])
         return nil
       end
+
+      # Activity types (interest/dividend/deposit/withdrawal) use amount, not qty/price
+      if %w[interest dividend deposit withdrawal].include?(type)
+        ticker_value = nil
+        manual_ticker_value = nil
+
+        if trade_params[:security_id].present?
+          security = Security.find(trade_params[:security_id])
+          ticker_value = security.exchange_operating_mic.present? ? "#{security.ticker}|#{security.exchange_operating_mic}" : security.ticker
+        elsif trade_params[:ticker].present?
+          ticker_value = trade_params[:ticker]
+        elsif trade_params[:manual_ticker].present?
+          manual_ticker_value = trade_params[:manual_ticker]
+        end
+        # Interest falls back to the synthetic cash security in CreateForm if no security given
+
+        return {
+          account:       account,
+          date:          trade_params[:date],
+          amount:        trade_params[:amount],
+          currency:      trade_params[:currency].presence || account.currency,
+          type:          type,
+          ticker:        ticker_value,
+          manual_ticker: manual_ticker_value
+        }.compact
+      end
+
+      # buy / sell — require security identifier
+      ticker_value = nil
+      manual_ticker_value = nil
 
       if trade_params[:security_id].present?
         security = Security.find(trade_params[:security_id])
@@ -234,7 +266,6 @@ class Api::V1::TradesController < Api::V1::BaseController
       qty = qty_raw.to_d
       price = price_raw.to_d
       if qty <= 0 || price <= 0
-        # Non-numeric input (e.g. "abc") becomes 0 with to_d; give a clearer message than "must be present"
         non_numeric = (qty.zero? && qty_raw !~ /\A0(\.0*)?\z/) || (price.zero? && price_raw !~ /\A0(\.0*)?\z/)
         return render_validation_error("Quantity and price must be valid numbers", [ "qty and price must be valid positive numbers" ]) if non_numeric
         return render_validation_error("Quantity and price are required", [ "qty and price must be present and positive" ])
