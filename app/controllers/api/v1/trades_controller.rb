@@ -145,7 +145,7 @@ class Api::V1::TradesController < Api::V1::BaseController
 
     def trade_params
       params.require(:trade).permit(
-        :account_id, :date, :qty, :price, :amount, :currency, :type,
+        :account_id, :date, :qty, :price, :amount, :currency,
         :security_id, :ticker, :manual_ticker, :investment_activity_label, :category_id
       )
     end
