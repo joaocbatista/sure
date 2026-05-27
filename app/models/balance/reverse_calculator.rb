@@ -24,6 +24,8 @@ class Balance::ReverseCalculator < Balance::BaseCalculator
           start_cash_balance = end_cash_balance
           start_non_cash_balance = end_non_cash_balance
           market_value_change = 0
+          cash_adjustment = 0
+          non_cash_adjustment = 0
         elsif valuation && valuation.entryable.reconciliation?
           # Reconciliation waypoint: reset to the known API-reported balance.
           # These waypoints are created by CurrentBalanceManager when it preserves
@@ -40,16 +42,30 @@ class Balance::ReverseCalculator < Balance::BaseCalculator
           start_non_cash_balance = end_non_cash_balance
           market_value_change = 0
 
-          # Zero out flows so the generated end_balance column does not add
-          # transaction amounts on top of the reconciliation anchor balance.
-          # Banks like Abanca (via Enable Banking) report end-of-day closing
-          # balances that already include all transactions for that day, so
-          # adding flows would cause double-counting.
-          flows = { cash_inflows: 0, cash_outflows: 0, non_cash_inflows: 0, non_cash_outflows: 0 }
+          # Preserve real transaction flows so UI/export paths show actual activity
+          # for this day. Instead of zeroing flows, compute a cash_adjustment that
+          # corrects the generated end_balance column to match the reconciliation
+          # anchor, regardless of what the flows are.
+          #
+          # The generated column formula is:
+          #   end_balance = start_cash_balance + (cash_inflows - cash_outflows) * flows_factor + cash_adjustments
+          #
+          # Solving for cash_adjustments:
+          #   cash_adjustments = valuation.amount - start_cash_balance - (cash_inflows - cash_outflows) * flows_factor
+          #
+          # Banks like Abanca (via Enable Banking) report end-of-day closing balances
+          # that already include all transactions for that day. Without this adjustment,
+          # the flows would be double-counted on top of the reconciliation anchor.
+          flows_factor = account.asset? ? 1 : -1
+          net_cash_flows = (flows[:cash_inflows] - flows[:cash_outflows]) * flows_factor
+          cash_adjustment = valuation.amount - end_cash_balance - net_cash_flows
+          non_cash_adjustment = 0
         else
           start_cash_balance = derive_start_cash_balance(end_cash_balance: end_cash_balance, date: date)
           start_non_cash_balance = derive_start_non_cash_balance(end_non_cash_balance: end_non_cash_balance, date: date)
           market_value_change = market_value_change_on_date(date, flows)
+          cash_adjustment = 0
+          non_cash_adjustment = 0
         end
 
         output_balance = build_balance(
@@ -62,7 +78,9 @@ class Balance::ReverseCalculator < Balance::BaseCalculator
           cash_outflows: flows[:cash_outflows],
           non_cash_inflows: flows[:non_cash_inflows],
           non_cash_outflows: flows[:non_cash_outflows],
-          net_market_flows: market_value_change
+          net_market_flows: market_value_change,
+          cash_adjustments: cash_adjustment,
+          non_cash_adjustments: non_cash_adjustment
         )
 
         end_cash_balance = start_cash_balance
