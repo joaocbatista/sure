@@ -39,6 +39,13 @@ class Balance::ReverseCalculator < Balance::BaseCalculator
           start_cash_balance = end_cash_balance
           start_non_cash_balance = end_non_cash_balance
           market_value_change = 0
+
+          # Zero out flows so the generated end_balance column does not add
+          # transaction amounts on top of the reconciliation anchor balance.
+          # Banks like Abanca (via Enable Banking) report end-of-day closing
+          # balances that already include all transactions for that day, so
+          # adding flows would cause double-counting.
+          flows = { cash_inflows: 0, cash_outflows: 0, non_cash_inflows: 0, non_cash_outflows: 0 }
         else
           start_cash_balance = derive_start_cash_balance(end_cash_balance: end_cash_balance, date: date)
           start_non_cash_balance = derive_start_non_cash_balance(end_non_cash_balance: end_non_cash_balance, date: date)
