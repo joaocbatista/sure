@@ -16,7 +16,8 @@ class DS::Pill < DesignSystemComponent
     neutral:     :gray
   }.freeze
 
-  attr_reader :label, :tone, :style, :size, :show_dot, :dot_only, :title, :icon, :marker, :custom_color
+  attr_reader :label, :tone, :style, :size, :show_dot, :dot_only, :title, :icon, :marker, :custom_color,
+              :truncate, :label_testid, :icon_size, :mono
 
   # Generic inline pill primitive. Two modes:
   #
@@ -50,8 +51,19 @@ class DS::Pill < DesignSystemComponent
   #   `SEMANTIC_TONE_ALIASES`.
   # - Sure has full violet / indigo / fuchsia / amber / green / gray /
   #   red ramps in the design system; this component picks named tokens
-  #   at render time. No raw hex.
-  def initialize(label: nil, tone: :violet, style: :soft, size: :sm, show_dot: nil, dot_only: false, title: nil, icon: nil, marker: true, custom_color: nil)
+  #   at render time. No raw hex — except `custom_color:`, which exists for
+  #   user-defined entities (categories, tags) whose hue is data, not design.
+  # - `truncate: true` lets the pill shrink inside a `min-w-0` parent and
+  #   ellipsize its label instead of overflowing (dense table cells like the
+  #   transaction row's category column). Default pills stay `shrink-0`.
+  # - `label_testid:` stamps `data-testid` on the label span for system /
+  #   controller tests that need to target the text node.
+  # - `icon_size:` passes through to the icon helper (default "xs"; the
+  #   category badge uses "sm" to keep its established glyph size).
+  # - `mono: true` applies `font-mono` for technical labels (queue names,
+  #   IDs, latencies) where tabular alignment aids scanning.
+  def initialize(label: nil, tone: :violet, style: :soft, size: :sm, show_dot: nil, dot_only: false, title: nil, icon: nil, marker: true, custom_color: nil,
+                 truncate: false, label_testid: nil, icon_size: "xs", mono: false)
     resolved_tone = SEMANTIC_TONE_ALIASES.fetch(tone.to_sym, tone.to_sym)
     @label = label || I18n.t("ds.pill.default_label", default: "Beta")
     @tone = TONES.include?(resolved_tone) ? resolved_tone : :violet
@@ -65,6 +77,10 @@ class DS::Pill < DesignSystemComponent
     @icon = icon
     @marker = marker
     @custom_color = custom_color
+    @truncate = truncate
+    @label_testid = label_testid
+    @icon_size = icon_size
+    @mono = mono
   end
 
   def palette
@@ -149,9 +165,13 @@ class DS::Pill < DesignSystemComponent
 
   def container_classes
     base = [
-      "inline-flex items-center align-middle font-medium whitespace-nowrap shrink-0",
+      "inline-flex items-center align-middle font-medium",
+      # Truncating pills must be allowed to shrink (and let the label span
+      # ellipsize); everything else keeps its intrinsic width.
+      truncate ? "max-w-full min-w-0" : "whitespace-nowrap shrink-0",
       "border leading-none"
     ]
+    base << "font-mono" if mono
 
     if marker
       # Marker mode (Beta / Canary / NEW): rounded-md (slight chip
@@ -162,7 +182,7 @@ class DS::Pill < DesignSystemComponent
       # tracking snap to Tailwind's scale to satisfy the design-system
       # "no arbitrary values" rule.
       base << "rounded-md uppercase"
-      base << (size == :md ? "px-2 py-0.5 text-[11px] tracking-wide gap-1" : "px-1.5 py-0.5 text-[10px] tracking-wider gap-1")
+      base << (size == :md ? "px-2 py-1 text-[11px] tracking-wide gap-1" : "px-1.5 py-0.5 text-[10px] tracking-wider gap-1")
     else
       # Badge mode (Pending / Active / Past due / category tag):
       # rounded-full pill shape (matches the existing convention used
@@ -170,7 +190,7 @@ class DS::Pill < DesignSystemComponent
       # the inline transaction badges). Normal case, snaps to the
       # design-system text scale (`text-xs` / `text-sm`).
       base << "rounded-full"
-      base << (size == :md ? "px-2 py-0.5 text-sm gap-1.5" : "px-1.5 py-0.5 text-xs gap-1")
+      base << (size == :md ? "px-2 py-1 text-sm gap-1.5" : "px-1.5 py-0.5 text-xs gap-1")
     end
     class_names(*base)
   end
