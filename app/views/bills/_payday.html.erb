@@ -1,4 +1,4 @@
-<%# locals: (occurrence:) %>
+<%# locals: (occurrence:, due_before: nil) %>
 <%# A payday in the month's date order, drawn like a bill row so it reads as
     what arrives between the bills. Its state is the model's call
     (RecurringOccurrence#payday_state), so a passed payday is shown as received
@@ -30,6 +30,15 @@
         <span class="@lg:hidden"><%= bills_row_date(occurrence) %> &middot;</span>
         <%= frequency_label(series) %>
       </p>
+      <% if due_before %>
+        <p class="text-xs text-secondary privacy-sensitive truncate">
+          <% if due_before[:until] %>
+            <%= t("bills.payday.due_before", amount: format_money(due_before[:amount]), date: format_date(due_before[:until])) %>
+          <% else %>
+            <%= t("bills.payday.due_before_next", amount: format_money(due_before[:amount])) %>
+          <% end %>
+        </p>
+      <% end %>
     </div>
 
     <%# The same amount column as a bill row: the figure, then its status under

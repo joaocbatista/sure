@@ -1,4 +1,4 @@
-<%# locals: (title:, occurrences:, suggestions: {}, meta: nil) %>
+<%# locals: (title:, occurrences:, suggestions: {}, meta: nil, payday_due_before: {}) %>
 <% return if occurrences.empty? %>
 
 <%# No shell by default: bills/index stacks the month sections in one. %>
@@ -6,7 +6,7 @@
   <% section.with_aside { tag.p(meta, class: "text-xs text-secondary privacy-sensitive shrink-0") } if meta %>
   <% occurrences.each do |occurrence| %>
     <% if occurrence.recurring_transaction.typed_income? %>
-      <%= render "bills/payday", occurrence: occurrence %>
+      <%= render "bills/payday", occurrence: occurrence, due_before: payday_due_before[occurrence.id] %>
     <% else %>
       <%= render "bills/occurrence", occurrence: occurrence, suggestion: suggestions[occurrence.id] %>
     <% end %>

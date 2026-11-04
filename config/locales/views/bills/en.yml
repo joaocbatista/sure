@@ -170,6 +170,8 @@ en:
       received: Received
       unmatched: Not matched yet
       expected: Expected
+      due_before: "%{amount} due before %{date}"
+      due_before_next: "%{amount} due before your next payday"
       skipped: Skipped
       missed: Missed
     pay_period:
@@ -515,6 +517,8 @@ en:
       received: Received
       unmatched: Not matched yet
       expected: Expected
+      due_before: "%{amount} due before %{date}"
+      due_before_next: "%{amount} due before your next payday"
       skipped: Skipped
       missed: Missed
     pay_period:

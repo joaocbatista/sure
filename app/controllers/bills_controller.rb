@@ -117,6 +117,7 @@ class BillsController < ApplicationController
     payday_this_month, payday_next_month = overview_paydays(today).partition { |occurrence| occurrence.effective_due_on <= month_end }
     @month_rows = (@month_rows + payday_this_month).sort_by { |occurrence| [ occurrence.effective_due_on, occurrence.id ] }
     @later = (@later + payday_next_month).sort_by(&:effective_due_on)
+    @payday_due_before = payday_due_before(payday_this_month + payday_next_month, today)
   end
 
   # One-click detection for a page with nothing on it: run the full pipeline
@@ -465,6 +466,45 @@ class BillsController < ApplicationController
                          .where(recurring_occurrences: { recurring_transaction_id: @series.id })
                          .where("recurring_allocations.paid_on >= ?", Date.current.beginning_of_year)
                          .sum(:allocated_amount)
+    end
+
+    # What each upcoming payday has to cover: the open bills due from it up to
+    # the next payday. A passed payday carries nothing, since its bills are
+    # settled. A window with a bill that cannot be converted to the family
+    # currency carries nothing either, rather than a total that leaves it out.
+    def payday_due_before(paydays, today)
+      upcoming = paydays.select { |payday| payday.scheduled? && payday.effective_due_on >= today }
+                        .sort_by(&:effective_due_on)
+      return {} if upcoming.empty?
+
+      income_series = Current.family.recurring_transactions
+                             .where(bill_type: "income", manual: true, status: "active")
+                             .accessible_by(Current.user)
+                             .select(:id)
+      after_last = Current.family.recurring_occurrences
+                          .where(recurring_transaction_id: income_series)
+                          .scheduled
+                          .where("#{RecurringOccurrence::EFFECTIVE_DUE_ON_SQL} > ?", upcoming.last.effective_due_on)
+                          .order(Arel.sql(RecurringOccurrence::EFFECTIVE_DUE_ON_SQL))
+                          .limit(1)
+                          .pluck(Arel.sql(RecurringOccurrence::EFFECTIVE_DUE_ON_SQL))
+                          .first
+                          &.to_date
+
+      upcoming.each_with_index.filter_map do |payday, index|
+        from = payday.effective_due_on
+        until_on = upcoming[index + 1]&.effective_due_on || after_last
+
+        bills = Current.family.recurring_occurrences
+                       .where(recurring_transaction_id: payable_series_ids)
+                       .scheduled
+                       .where("#{RecurringOccurrence::EFFECTIVE_DUE_ON_SQL} >= ?", from)
+        bills = bills.where("#{RecurringOccurrence::EFFECTIVE_DUE_ON_SQL} < ?", until_on) if until_on
+        total, unconvertible = total_of(bills.to_a) { |occurrence| occurrence.resolved_expected_amount_money.abs }
+        next if unconvertible.positive?
+
+        [ payday.id, { amount: total || Money.new(0, Current.family.currency), until: until_on } ]
+      end.to_h
     end
 
     # Manually declared income due this month or next, whether or not its date
