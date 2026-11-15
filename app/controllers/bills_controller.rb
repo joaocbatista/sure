@@ -194,6 +194,17 @@ class BillsController < ApplicationController
     # A pending suggestion is the one thing that changes what the drawer
     # should offer, so it is worth the one query.
     @drawer_suggestion = @current_occurrence&.allocations&.suggested&.first
+
+    # The summary's verb only reaches the cycle the drawer is scoped to. When
+    # that is the next open cycle, a past payment still needs a route in, so
+    # name the most recent settled cycle for the secondary action. Allocations
+    # are required: a paid row with none has nothing to unlink or review.
+    @latest_paid_occurrence = @series.recurring_occurrences
+                                     .paid
+                                     .where(id: RecurringAllocation.confirmed.select(:recurring_occurrence_id))
+                                     .order(due_on: :desc)
+                                     .first
+
     render :drawer, layout: false
   end
 
@@ -515,7 +526,10 @@ class BillsController < ApplicationController
       derived = income_records.filter_map do |series|
         skipped = skipped_dates.fetch(series.id, Set.new)
         taken = ->(date) { skipped.include?(date) || scheduled_dates.include?([ series.id, date ]) }
-        candidate = series.schedule.next_occurrence_after(last_payday)
+        # Schedules repeat before the income starts, so the successor cannot
+        # fall before the series' anchor date. The occurrence generator applies
+        # the same limit when it creates the stored rows.
+        candidate = series.schedule.next_occurrence_after([ last_payday, series.anchor_date&.prev_day ].compact.max)
         # Step past every taken date. Each step moves later and taken is finite.
         candidate = series.schedule.next_occurrence_after(candidate) while candidate && taken.call(candidate)
         candidate
@@ -531,6 +545,11 @@ class BillsController < ApplicationController
                        .scheduled
                        .where("#{RecurringOccurrence::EFFECTIVE_DUE_ON_SQL} >= ?", from)
         bills = bills.where("#{RecurringOccurrence::EFFECTIVE_DUE_ON_SQL} < ?", until_on) if until_on
+        # Only rows through the materialization horizon are stored, so a window
+        # that reaches past it cannot be totaled. Withhold its total instead of
+        # showing one that leaves out the bills due after the horizon.
+        next [] if until_on && until_on - 1 > Date.current + RecurringTransaction::OccurrenceGenerator::HORIZON_DAYS
+
         bills = bills.to_a
         preload_allocation_sums(bills)
 
@@ -595,13 +614,16 @@ class BillsController < ApplicationController
     end
 
     def preload_allocation_sums(occurrences)
-      sums = RecurringAllocation.confirmed
-                                .where(recurring_occurrence_id: occurrences.map(&:id))
-                                .group(:recurring_occurrence_id)
-                                .sum(:allocated_amount)
+      ids = occurrences.map(&:id)
+      confirmed = RecurringAllocation.confirmed.where(recurring_occurrence_id: ids)
+      sums = confirmed.group(:recurring_occurrence_id).sum(:allocated_amount)
+      matched = confirmed.where.not(entry_id: nil).distinct.pluck(:recurring_occurrence_id).to_set
+      latest = confirmed.group(:recurring_occurrence_id).maximum(:paid_on)
 
       occurrences.each do |occurrence|
         occurrence.cached_confirmed_allocated = sums.fetch(occurrence.id, 0)
+        occurrence.cached_matched_entry = matched.include?(occurrence.id)
+        occurrence.cached_received_on = latest[occurrence.id]
       end
     end
 

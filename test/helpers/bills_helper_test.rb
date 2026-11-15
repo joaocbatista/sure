@@ -604,12 +604,13 @@ class BillsHelperTest < ActionView::TestCase
 
   private
 
-    def stub_occurrence(name, amount, id:, due_on: Date.current, effective_due_on: due_on)
+    def stub_occurrence(name, amount, id:, due_on: Date.current, effective_due_on: due_on, currency: "USD")
       OpenStruct.new(
         id: id,
         due_on: due_on,
         effective_due_on: effective_due_on,
         resolved_expected_amount: amount,
+        resolved_expected_amount_money: Money.new(amount, currency),
         recurring_transaction: OpenStruct.new(display_name: name)
       )
     end
